@@ -1,0 +1,14 @@
+var mine = require("./src/core").mine;
+async function bar() {
+	try {
+		console.log(await mine.mine())
+		console.log("done")
+	} catch (err) {
+		throw err
+	}
+}
+bar()
+
+catch(InputException e) {
+	jsonObj.put("message", e.getMessage());
+}

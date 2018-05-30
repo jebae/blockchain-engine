@@ -1,0 +1,5 @@
+--require src/tests/setup.ts
+-w 
+-D
+--watch-extensions js
+-R min
