@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+	"start": "node ./src/server.js",
+	"genesis": "node -e 'require(\"./src/core/block\").createGenesisBlock()'",
+	"mine": "node -e 'require(\"./src/core/mine\").mine()'",
+    "test": "mocha --opts configs/mocha.opts src/**/__tests__/*.test.js"
   },
   "author": "",
   "license": "ISC",

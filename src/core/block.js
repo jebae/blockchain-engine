@@ -1,8 +1,11 @@
+const db = require("mongoose");
+const models = require("../models");
 const Block = require("../models").Block;
 const Transaction = require("../models").Transaction;
 const Crypto = require("crypto");
 
 function createGenesisBlock() {
+	db.connect(models.DB_ADDRESS);
 	var genesis, prevBlockHash, nonce=0;
 
 	return Block.findOne().exec()
@@ -20,39 +23,16 @@ function createGenesisBlock() {
 					if (Block.isValidProof(genesis)) break;
 					nonce++;
 				}
-				return genesis.save();
+				genesis.save();
 			} else {
 				throw new Error("GENESIS BLOCK IS ALREADY EXIST");
 			}
 		})
-}
-
-function create(block) {
-	var new_block;
-
-	return Block.lastBlock()
-		.then(function (last_block) {
-			var prevBlockHash = Block.PoW(last_block);
-
-			// must handle merkleRootHash
-
-			new_block = new Block({
-				prevBlockHash,
-				merkleRootHash: " ",
-				txs: block.txs,
-				timestamp: block.timestamp,
-				nonce: block.nonce
-			});
-		})
-		.then(function () {
-			if (Block.isValidProof(new_block)) {
-				return new_block.save();
-			}
-			throw new Error("PROOF NOT MATCH");
+		.catch(function(err) {
+			throw err;
 		});
 }
 
 module.exports = {
-	create: create,
-	createGenesisBlock: createGenesisBlock
+	createGenesisBlock
 }

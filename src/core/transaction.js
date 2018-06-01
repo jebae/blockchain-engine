@@ -8,10 +8,7 @@ function create(tx) {
 		receiver: tx.receiver,
 		amount: tx.amount
 	});
-	
-	new_tx.id = Crypto.createHash("sha256").update(
-		new_tx.sender + new_tx.receiver + new_tx.amount + new_tx.timestamp
-	).digest("hex");
+	new_tx.makeId();
 	
 	return new_tx.save();
 }

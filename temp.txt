@@ -9,6 +9,8 @@ async function bar() {
 }
 bar()
 
-catch(InputException e) {
-	jsonObj.put("message", e.getMessage());
-}
+
+$ajax("/block/create")
+	.then(function() {
+
+	})

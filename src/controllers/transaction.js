@@ -14,18 +14,21 @@ function create(req, res) {
 		}
 	}
 
-	transaction.create({
+	return transaction.create({
 		sender: req.body.sender,
 		receiver: req.body.receiver,
 		amount: req.body.amount
 	})
 	.then(function() {
-		res.json({ success: true });
+		res.json({
+			success: true,
+			message: "New transaction is created"
+		});
 	})
 	.catch(function(err) {
 		res.json({
 			success: false,
-			message: "DATABASE ERROR"
+			message: err.message
 		})
 		throw err;
 	});

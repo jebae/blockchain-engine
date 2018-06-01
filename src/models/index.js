@@ -10,6 +10,15 @@ const TransactionSchema = new db.Schema({
 	timestamp: { type: Number, default: Date.now }
 });
 
+TransactionSchema.methods.makeId = function() {
+	this.id = Crypto.createHash("sha256").update(
+		this.sender +
+		this.receiver +
+		this.amount +
+		this.timestamp
+	).digest("hex");
+}
+
 const BlockSchema = new db.Schema({
 	prevBlockHash: { type: String, required: true },
 	merkleRootHash: { type: String, required: true },
@@ -34,10 +43,8 @@ BlockSchema.statics.PoW = function(block) {
 BlockSchema.statics.isValidProof = function(block) {
 	var hash = this.PoW(block);
 
-	console.log("hash", hash);
-	console.log("nonce", block.nonce);
-	
-	if (hash.split("0000")[0] === "") 
+	console.log("nonce", block.nonce, "hash", hash);
+	if (hash.split("00")[0] === "") 
 		return true;
 	return false;
 }

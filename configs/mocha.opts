@@ -1,4 +1,4 @@
---require src/tests/setup.ts
+--require src/tests/setup.js
 -w 
 -D
 --watch-extensions js
