@@ -1,11 +1,8 @@
-const db = require("mongoose");
-const models = require("../models");
 const Block = require("../models").Block;
 const Transaction = require("../models").Transaction;
 const Crypto = require("crypto");
 
 function createGenesisBlock() {
-	db.connect(models.DB_ADDRESS);
 	var genesis, prevBlockHash, nonce=0;
 
 	return Block.findOne().exec()
@@ -23,7 +20,7 @@ function createGenesisBlock() {
 					if (Block.isValidProof(genesis)) break;
 					nonce++;
 				}
-				genesis.save();
+				return genesis.save();
 			} else {
 				throw new Error("GENESIS BLOCK IS ALREADY EXIST");
 			}

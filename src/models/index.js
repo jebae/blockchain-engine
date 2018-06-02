@@ -43,7 +43,8 @@ BlockSchema.statics.PoW = function(block) {
 BlockSchema.statics.isValidProof = function(block) {
 	var hash = this.PoW(block);
 
-	console.log("nonce", block.nonce, "hash", hash);
+	if (process.argv && process.argv[2] == "log")
+		console.log("nonce", block.nonce, "hash", hash);
 	if (hash.split("00")[0] === "") 
 		return true;
 	return false;

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
 	"start": "node ./src/server.js",
-	"genesis": "node -e 'require(\"./src/core/block\").createGenesisBlock()'",
-	"mine": "node -e 'require(\"./src/core/mine\").mine()'",
+	"genesis": "node src/commands/createGenesisBlock.js log",
+	"mine": "node src/commands/mine.js log",
     "test": "mocha --opts configs/mocha.opts src/**/__tests__/*.test.js"
   },
   "author": "",

@@ -5,7 +5,6 @@ const models = require("../models");
 const Block = require("../models").Block;
 const Transaction = require("../models").Transaction;
 
-
 function check(nonce) {
 	return Block.lastBlock()
 		.then(function(last_block) {
@@ -35,7 +34,6 @@ function check(nonce) {
 }
 
 function mine() {
-	db.connect(models.DB_ADDRESS);
 	var nonce = 0;
 
 	var loop = function() {
