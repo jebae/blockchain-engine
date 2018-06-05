@@ -12,16 +12,20 @@ describe("Transaction Model", function() {
 		var saved;
 		var tx = new Transaction({
 			sender: "sender",
-			receiver: "receiver",
-			amount: 5
+			inputs: [
+				{ id: "id1", amount: 5 }
+			],
+			outputs: [
+				{ receiver: "receiver", amount: 5 }
+			],
 		});
 		tx.makeId();
 		await tx.save();
 
 		saved = await Transaction.findOne();
 		expect(saved.sender).to.equal(tx.sender);
-		expect(saved.receiver).to.equal(tx.receiver);
-		expect(saved.amount).to.equal(tx.amount);
+		expect(saved.inputs.toObject()).to.deep.equal(tx.inputs.toObject());
+		expect(saved.outputs.toObject()).to.deep.equal(tx.outputs.toObject());
 		expect(saved.id).to.equal(tx.id);
 	});
 

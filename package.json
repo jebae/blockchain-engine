@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-	"start": "node ./src/server.js",
-	"genesis": "node src/commands/createGenesisBlock.js log",
-	"mine": "node src/commands/mine.js log",
+    "start": "node ./src/server.js",
+    "genesis": "node src/commands/createGenesisBlock.js log",
+    "mine": "node src/commands/mine.js log",
     "test": "mocha --opts configs/mocha.opts src/**/__tests__/*.test.js"
   },
   "author": "",
@@ -14,6 +14,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
+    "elliptic": "^6.4.0",
     "express": "^4.16.3",
     "mongoose": "^5.1.2",
     "promirepl": "^1.0.1"

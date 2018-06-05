@@ -1,5 +1,5 @@
 module.exports = {
-	transaction: require("./transaction"),
-	block: require("./block"),
-	mine: require("./mine")
+	TxCore: require("./transaction"),
+	BlockCore: require("./block"),
+	MineCore: require("./mine")
 }

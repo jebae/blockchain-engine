@@ -1,4 +1,4 @@
 module.exports = {
-	txController: require("./transaction"),
-	blockController: require("./block")
+	TxController: require("./transaction"),
+	BlockController: require("./block")
 }

@@ -50,6 +50,7 @@ function mine() {
 						.catch(function(err) {
 							throw err;
 						});
+					nonce = 0;
 				}
 				return loop();
 			})

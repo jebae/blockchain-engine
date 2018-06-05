@@ -5,17 +5,28 @@ const Crypto = require("crypto");
 const TransactionSchema = new db.Schema({
 	id: { type: String, required: true },
 	sender: { type: String, required: true },
-	receiver: { type: String, required: true },
-	amount: { type: Number, required: true },
+	inputs: [
+		{ id: String, amount: Number, _id: false }
+	],
+	outputs: [
+		{ receiver: String, amount: Number, _id: false }
+	],
 	timestamp: { type: Number, default: Date.now }
 });
 
+if (!TransactionSchema.options.toObject) TransactionSchema.options.toObject = {};
+TransactionSchema.options.toObject.transform = function(doc, ret, options) {
+	delete ret._id;
+	delete ret.__v;
+	return ret;
+}
+
 TransactionSchema.methods.makeId = function() {
+	var source = this.toObject();
+	delete source._id;
+
 	this.id = Crypto.createHash("sha256").update(
-		this.sender +
-		this.receiver +
-		this.amount +
-		this.timestamp
+		JSON.stringify(source)
 	).digest("hex");
 }
 
@@ -50,11 +61,22 @@ BlockSchema.statics.isValidProof = function(block) {
 	return false;
 }
 
+const NodeSchema = new db.Schema({
+	host: { type: String, required: true },
+	port: { type: Number, required: true }
+});
+
+NodeSchema.virtual("address").get(function() {
+	return this.host + ":" + this.port;
+})
+
 const Transaction = db.model("transactions", TransactionSchema);
 const Block = db.model("blocks", BlockSchema);
+const Node = db.model("nodes", NodeSchema);
 
 module.exports = {
 	DB_ADDRESS: "mongodb://" + ENV.DB_HOST + "/" + ENV.DB_NAME,
-	Transaction: Transaction,
-	Block: Block
+	Transaction,
+	Block,
+	Node
 };

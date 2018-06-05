@@ -5,6 +5,16 @@ const setup_db = async function() {
 	db.models = {};
 	db.modelSchemas = {};
 	await db.connect(models.DB_ADDRESS + "_test");
+	await models.Node.insertMany([
+		{
+			host: "localhost",
+			port: 8081
+		},
+		{
+			host: "localhost",
+			port: 8082
+		}
+	]);
 }
 
 const reset_db = async function() {
