@@ -6,7 +6,8 @@ function create(tx, sign) {
 	var new_tx = new Transaction({
 		sender: tx.sender,
 		inputs: tx.inputs,
-		outputs: tx.outputs
+		outputs: tx.outputs,
+		timestamp: tx.timestamp
 	});
 	new_tx.makeId();
 	

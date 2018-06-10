@@ -1,13 +1,19 @@
 const expect = require("chai").expect;
+const sinon = require("sinon");
 const setup = require("../../tests/setup");
 const MineCore = require("../mine");
 const Block = require("../../models").Block;
+const Transaction = require("../../models").Transaction;
 
 describe("Mine core", function() {
-	var genesis;
+	var sandbox, fakeIsValidProof,
+		genesis, tx;
 
 	beforeEach(async function() {
 		await setup.setup_db();
+		sandbox = sinon.createSandbox();
+		fakeIsValidProof = sandbox.stub(Block, "isValidProof");
+
 		genesis = new Block({
 			prevBlockHash: "0000e93abd8969c91092045dbed5a8af912714d751faa6d19a0c379c86992171",
 			merkleRootHash: " ",
@@ -15,6 +21,16 @@ describe("Mine core", function() {
 			timestamp: 1527677193761,
 			nonce: 1501
 		});
+		tx = {
+			sender: "0451347798bb9704b3a59d00098312e647456a0d7d0aa7f8b6" +
+				"9822df6f5f70526a76208346f8881ffd5682c71badf9ee59a3d0ffd60712a9b7636dd076690c6bbb",
+			inputs: [
+				{ id: "id1", amount: 5 }
+			],
+			outputs: [
+				{ receiver: "receiver", amount: 5 }
+			]
+		};
 	});
 
 	it("should not mine without genesis block", async function() {
@@ -24,16 +40,26 @@ describe("Mine core", function() {
 			});
 	});
 
-	it.skip("should mine", async function() {
+	it("should mine", async function() {
+		fakeIsValidProof.returns(true);
+		var new_tx = new Transaction(tx);
+		new_tx.makeId();
+		await new_tx.save();
 		await genesis.save();
-
-		return Promise.resolve(MineCore.mine())
+		
+		return Promise.resolve(MineCore.mine(true))
 			.then(function(block) {
-				console.log(block);
+				expect(block.txs[0].inputs.length).to.equal(0);
+				expect(block.txs[1].inputs.length).to.equal(tx.inputs.length);
+				return Transaction.find();
+			})
+			.then(function(txs) {
+				expect(txs.length).to.equal(0);
 			});
 	});
 
 	afterEach(async function() {
+		sandbox.restore();
 		await setup.reset_db();
 	});
 });

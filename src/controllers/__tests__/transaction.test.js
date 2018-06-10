@@ -1,5 +1,7 @@
 const expect = require("chai").expect;
 const sinon = require("sinon");
+const EC = require("elliptic").ec;
+const Crypto = require("crypto");
 const setup = require("../../tests/setup");
 const TxController = require("../").TxController;
 const Validate = require("../../core").TxCore.validate;
@@ -9,6 +11,7 @@ const NOT_ENOUGH_DATA = require("../../utils").NOT_ENOUGH_DATA;
 
 describe("Tx controller", function() {
 	var sandbox, fakeValidate;
+	var tx, sign;
 	var res = {
 			json: function(body) {
 				this.body = body
@@ -19,6 +22,22 @@ describe("Tx controller", function() {
 	beforeEach(async function() {
 		await setup.setup_db();
 
+		const ec = new EC("secp256k1");
+		const key = ec.genKeyPair();
+		const privatekey = key.getPrivate("hex");
+		const pubkey = key.getPublic("hex");
+		tx = {
+			sender: pubkey,
+			inputs: [
+				{ id: "id1", amount: 5 }
+			],
+			outputs: [
+				{ receiver: "receiver", amount: 5 }
+			],
+			timestamp: Date.now()
+		};
+		var msghex = Crypto.createHash("sha256").update(JSON.stringify(tx)).digest("hex");
+		sign = ec.keyFromPrivate(privatekey, "hex").sign(msghex).toDER("hex");
 		sandbox = sinon.createSandbox();
 		fakeValidate = sandbox.stub(Validate, "validate");
 	});
@@ -70,16 +89,8 @@ describe("Tx controller", function() {
 			]
 		}));
 		var req = { body: {
-			transaction: {
-				sender: "sender",
-				inputs: [
-					{ id: "id1", amount: 5 }
-				],
-				outputs: [
-					{ receiver: "receiver", amount: 5 }
-				]
-			},
-			sign: " "
+			transaction: tx,
+			sign
 		}};
 
 		return Promise.resolve(TxController.create(req, res))
@@ -116,18 +127,8 @@ describe("Tx controller", function() {
 
 	it("should validate tx", function() {
 		fakeValidate.returns(null);
-		var transaction = {
-			sender: "sender",
-			inputs: [
-				{ id: "id1", amount: 5 }
-			],
-			outputs: [
-				{ receiver: "receiver", amount: 5 }
-			]
-		};
-		var sign = " ";
 		var req = { body: {
-			transaction, sign
+			transaction: tx, sign
 		}};
 		var expected_res = {
 			success: true,
@@ -143,18 +144,8 @@ describe("Tx controller", function() {
 	});
 
 	it("should show message with wrong amount or sign", function() {
-		var transaction = {
-			sender: "sender",
-			inputs: [
-				{ id: "id1", amount: 5 }
-			],
-			outputs: [
-				{ receiver: "receiver", amount: 5 }
-			]
-		};
-		var sign = " ";
 		var req = { body: {
-			transaction, sign
+			transaction: tx, sign
 		}};
 		var expected_res = {
 			success: true,
@@ -178,19 +169,11 @@ describe("Tx controller", function() {
 	})
 
 	it("should confirm", async function() {
-		var tx = new Transaction({
-			sender: "sender",
-			inputs: [
-				{ id: "id1", amount: 5 }
-			],
-			outputs: [
-				{ receiver: "receiver", amount: 5 }
-			]
-		});
-		await tx.makeId();
-		await tx.save();
+		var transaction = new Transaction(tx);
+		await transaction.makeId();
+		await transaction.save();
 		var req = {
-			body: tx.toObject()
+			body: transaction.toObject()
 		}
 
 		return Promise.resolve(TxController.confirm(req, res))
@@ -202,18 +185,8 @@ describe("Tx controller", function() {
 	describe.skip("Tx controller Network required", async function() {
 		it("should create tx", async function() {
 			var req = { body: {
-				transaction: {
-					sender: "0451347798bb9704b3a59d00098312e647456a0d7d0aa7f8b6" +
-						"9822df6f5f70526a76208346f8881ffd5682c71badf9ee59a3d0ffd60712a9b7636dd076690c6bbb",
-					inputs: [
-						{ id: "id1", amount: 5 }
-					],
-					outputs: [
-						{ receiver: "receiver", amount: 5 }
-					]
-				},
-				sign: "304402205cb509c59561059123a189b10305f57de9b3ee8eb3" +
-					"b678a5f78dc66d5fbe6d8602201923396cab2d2301a8cd5fca03dd9baccaf56987e7055e5a97dd50aa1b331aa9"
+				transaction: tx,
+				sign 
 			}};
 
 			return Promise.resolve(TxController.create(req, res))
@@ -232,26 +205,16 @@ describe("Tx controller", function() {
 				})
 		})
 
-		it("should create tx", async function() {
+		it("should not create tx", async function() {
+			var wrongSign = sign.replace("5", "f");
 			var req = { body: {
-				transaction: {
-					sender: "0451347798bb9704b3a59d00098312e647456a0d7d0aa7f8b6" +
-						"9822df6f5f70526a76208346f8881ffd5682c71badf9ee59a3d0ffd60712a9b7636dd076690c6bbb",
-					inputs: [
-						{ id: "id1", amount: 5 }
-					],
-					outputs: [
-						{ receiver: "receiver", amount: 5 }
-					]
-				},
-				sign: "304402205cb509c59561059123a189b10305f57de9b3ee8eb3" +
-					"b678a5f78dc66d5fbe6d8602201923396cab2d2301a8cd5fca03dd9baccaf56987e7055e5a97dd50aa1b331aa0"
+				transaction: tx,
+				sign: wrongSign
 				// last 0 is originally 9
 			}};
 
 			return Promise.resolve(TxController.create(req, res))
 				.then(function() {
-					console.log(res.body)
 					expect(res.body.success).to.equal(true);
 					expect(res.body.result).to.equal(false);
 					expect(res.body.consensus).to.equal(0);

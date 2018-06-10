@@ -1,5 +1,7 @@
 const expect = require("chai").expect;
 const sinon = require("sinon");
+const EC = require("elliptic").ec;
+const Crypto = require("crypto");
 const setup = require("../../tests/setup");
 const Create = require("../").TxCore.create;
 const Validate = require("../").TxCore.validate;
@@ -15,21 +17,26 @@ describe("Transaction core", function() {
 	beforeEach(async function() {
 		await setup.setup_db();
 
+		const ec = new EC("secp256k1");
+		const key = ec.genKeyPair();
+		const privatekey = key.getPrivate("hex");
+		const pubkey = key.getPublic("hex");
+
 		sandbox = sinon.createSandbox();
 		fakeReqToNodes = sandbox.stub(utils, "reqToNodes");
 		tx = {
-			sender: "0451347798bb9704b3a59d00098312e647456a0d7d0aa7f8b6" +
-				"9822df6f5f70526a76208346f8881ffd5682c71badf9ee59a3d0ffd60712a9b7636dd076690c6bbb",
+			sender: pubkey,
 			inputs: [
 				{ id: "id1", amount: 5 }
 			],
 			outputs: [
 				{ receiver: "receiver", amount: 5 }
-			]
+			],
+			timestamp: Date.now()
 		};
-		sign = "304402205cb509c59561059123a189b10305f57de9b3ee8eb3" +
-			"b678a5f78dc66d5fbe6d8602201923396cab2d2301a8cd5fca03dd9baccaf56987e7055e5a97dd50aa1b331aa9";
-		});
+		var msghex = Crypto.createHash("sha256").update(JSON.stringify(tx)).digest("hex");
+		sign = ec.keyFromPrivate(privatekey, "hex").sign(msghex).toDER("hex");
+	});
 
 	it("should create tx", async function() {
 		return Promise.resolve(Create.create(tx, sign))
@@ -166,18 +173,6 @@ describe("Transaction core", function() {
 
 		it("should gather validate result validate = true", async function() {
 			var nodes = await Node.count();
-			var tx = {
-				sender: "0451347798bb9704b3a59d00098312e647456a0d7d0aa7f8b6" +
-					"9822df6f5f70526a76208346f8881ffd5682c71badf9ee59a3d0ffd60712a9b7636dd076690c6bbb",
-				inputs: [
-					{ id: "id1", amount: 5 }
-				],
-				outputs: [
-					{ receiver: "receiver", amount: 5 }
-				]
-			};
-			var sign = "304402205cb509c59561059123a189b10305f57de9b3ee8eb3" +
-				"b678a5f78dc66d5fbe6d8602201923396cab2d2301a8cd5fca03dd9baccaf56987e7055e5a97dd50aa1b331aa9";
 
 			return Promise.resolve(Validate.gatherValidate(tx, sign))
 				.then(function(validates) {
@@ -192,21 +187,9 @@ describe("Transaction core", function() {
 
 		it("should gather validate return validate = false", async function() {
 			var nodes = await Node.count();
-			var tx = {
-				sender: "0451347798bb9704b3a59d00098312e647456a0d7d0aa7f8b6" +
-					"9822df6f5f70526a76208346f8881ffd5682c71badf9ee59a3d0ffd60712a9b7636dd076690c6bbb",
-				inputs: [
-					{ id: "id1", amount: 5 }
-				],
-				outputs: [
-					{ receiver: "receiver", amount: 5 }
-				]
-			};
-			var sign = "304402205cb509c59561059123a189b10305f57de9b3ee8eb3" +
-				"b678a5f78dc66d5fbe6d8602201923396cab2d2301a8cd5fca03dd9baccaf56987e7055e5a97dd50aa1b331aa9";
-			sign = sign.replace("5", "f");
+			var temp_sign = sign.replace("5", "f");
 
-			return Promise.resolve(Validate.gatherValidate(tx, sign))
+			return Promise.resolve(Validate.gatherValidate(tx, temp_sign))
 				.then(function(validates) {
 					expect(validates.result).to.equal(false);
 					expect(validates.consensus).to.equal(0);

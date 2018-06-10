@@ -39,6 +39,21 @@ function signValidate(tx, sign) {
 	}
 }
 
+function inputsValidate(tx) {
+	// check id is exist and output amount is same as input amount
+	// check already spent (by search tx where inputs is id)
+
+	var promises = [];
+
+	for (var input of tx.inputs) {
+		promises.push(
+			Block.findOne()
+		);
+	}
+
+
+}
+
 function validate(tx, sign) {
 	for (var func of [ amountValidate, signValidate ]) {
 		var message = func(tx, sign);
@@ -50,7 +65,7 @@ function validate(tx, sign) {
 }
 
 function gatherValidate(tx, sign) {
-	const url = "/transaction/validate";
+	const url = "/transaction/validate",
 		data = { transaction: tx, sign };
 	var consensus = 0,
 		result = false;

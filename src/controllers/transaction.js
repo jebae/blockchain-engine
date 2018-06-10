@@ -20,6 +20,7 @@ function create(req, res) {
 		return;
 	}
 
+	
 	return Create.createWithConsensus(req.body.transaction, req.body.sign)
 		.then(function(validates) {
 			res.json(

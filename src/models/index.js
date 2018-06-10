@@ -1,10 +1,13 @@
 const db = require("mongoose");
 const ENV = process.env;
 const Crypto = require("crypto");
+const MinerPubkey = ENV["MINER_PUBKEY"];
+const coinbaseAmount = 25;
+const coinbaseId = "0".repeat(64);
 
 const TransactionSchema = new db.Schema({
 	id: { type: String, required: true },
-	sender: { type: String, required: true },
+	sender: String,
 	inputs: [
 		{ id: String, amount: Number, _id: false }
 	],
@@ -28,6 +31,16 @@ TransactionSchema.methods.makeId = function() {
 	this.id = Crypto.createHash("sha256").update(
 		JSON.stringify(source)
 	).digest("hex");
+}
+
+TransactionSchema.statics.coinbase = function() {
+	var coinbase = new Transaction({
+		id: coinbaseId,
+		outputs: [
+			{ receiver: MinerPubkey, amount: coinbaseAmount }
+		]
+	});
+	return coinbase;
 }
 
 const BlockSchema = new db.Schema({
