@@ -1,8 +1,10 @@
 const Crypto = require("crypto");
 const EC = require("elliptic").ec;
 const utils = require("../../utils");
+const BlockCore = require("../block");
 const WRONG_SIGN = "Sign is wrong";
 const WRONG_AMOUNT = "Amount is wrong";
+const WRONG_INPUTS = "Input is wrong";
 
 function amountValidate(tx) {
 	var inputsAmount = tx.inputs.reduce(function(acc, i) {
@@ -25,8 +27,9 @@ function signValidate(tx, sign) {
 		const pubkey = tx.sender;
 
 		// sender, inputs, outputs only contained in tx
-		msg = Crypto.createHash("sha256").update(
-			JSON.stringify(tx)
+		msg = Crypto.createHash("sha1").update(
+			tx.sender +
+			tx.timestamp
 		).digest("hex");
 		var verifier = ec.keyFromPublic(pubkey, "hex").verify(msg, sign);
 
@@ -40,17 +43,28 @@ function signValidate(tx, sign) {
 }
 
 function inputsValidate(tx) {
-	// check id is exist and output amount is same as input amount
-	// check already spent (by search tx where inputs is id)
+	return BlockCore.utxo(tx.sender)
+		.then(function(utxo) {
+			for (var input of tx.inputs) {
+				var inutxo = utxo.filter(function(t) {
+					return (
+						t.id == input.id &&
+						t.outputs.filter(function(output) {
+							return (
+								output.receiver == tx.sender &&
+								output.amount == input.amount
+							);
+						}).length
+					);
+				}).length;
 
-	var promises = [];
-
-	for (var input of tx.inputs) {
-		promises.push(
-			Block.findOne()
-		);
-	}
-
+				if (inutxo) {
+					continue;
+				}
+				return WRONG_INPUTS;
+			}
+			return null;
+		});
 
 }
 
@@ -58,10 +72,14 @@ function validate(tx, sign) {
 	for (var func of [ amountValidate, signValidate ]) {
 		var message = func(tx, sign);
 		if (message) {
-			return message;
+			return Promise.resolve(message);
 		}
 	}
-	return null;
+
+	return inputsValidate(tx)
+		.then(function(message) {
+			return message;
+		})
 }
 
 function gatherValidate(tx, sign) {
@@ -70,30 +88,33 @@ function gatherValidate(tx, sign) {
 	var consensus = 0,
 		result = false;
 
-	message = validate(tx, sign);
-	if (!message) consensus++;
-	
-	return utils.reqToNodes(
-		url, data, 
-		function(res) { return res.data }
-	)
-	.then(function (responses) {
-		for (var res of responses) {
-			if (res.success && res.validate) consensus++;
-		}
-		result = ((responses.length + 1) / 2 < consensus) ? true : false;
+	return validate(tx, sign)
+		.then(function(message) {
+			if (!message) consensus++;
 
-		return {
-			result,
-			consensus,
-			responses
-		}
-	})
+			return utils.reqToNodes(
+				url, data, 
+				function(res) { return res.data }
+			);
+		})
+		.then(function (responses) {
+			for (var res of responses) {
+				if (res.success && res.validate) consensus++;
+			}
+			result = ((responses.length + 1) / 2 < consensus) ? true : false;
+
+			return {
+				result,
+				consensus,
+				responses
+			}
+		})
 }
 
 module.exports = {
 	amountValidate,
 	signValidate,
+	inputsValidate,
 	validate,
 	gatherValidate,
 	WRONG_AMOUNT,

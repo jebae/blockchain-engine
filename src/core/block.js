@@ -1,6 +1,7 @@
 const Block = require("../models").Block;
 const Transaction = require("../models").Transaction;
 const Crypto = require("crypto");
+const utils = require("../utils");
 
 function createGenesisBlock() {
 	var genesis, prevBlockHash, nonce=0;
@@ -30,6 +31,108 @@ function createGenesisBlock() {
 		});
 }
 
+function utxo(client) {
+	return Block.aggregate([
+		{ $unwind: "$txs" }, 
+		{ $replaceRoot: { newRoot: "$txs" }},
+		{ $match: { "outputs.receiver": client }},
+		{ $lookup: { 
+			from: "blocks", 
+			let: { id: "$id", sender: "$sender" },
+			pipeline: [
+				{ $unwind: "$txs" },
+				{ $project: {
+					_id: 0,
+					sender: "$txs.sender",
+					inputs: "$txs.inputs"
+				} },
+				{ $unwind: "$inputs" },        
+				{ $match: { $expr: { 
+					$and: [
+						{ $eq: [ "$inputs.id", "$$id" ]},
+						{ $eq: [ "$sender", client ]}
+					]                    
+				}}}
+			],
+			as: "spent" 
+		}},
+		{ $project: {
+			_id: 0,
+			id: 1,
+			sender: 1,
+			inputs: 1,
+			outputs: 1,
+			timestamp: 1,
+			spent: { $cond: {
+				if: { $eq: [ "$spent", [] ] },
+				then: false,
+				else: true
+			}}
+		}},
+		{ $match: { spent: false }},
+		{ $sort: { timestamp: 1 }}
+	]);
+}
+
+function chain() {
+	return Block.find({}, { _id: 0 })
+		.sort({ timestamp: 1 }).exec();
+}
+
+function isValidChain(chain) {
+	var index = 1;
+	var prevBlock = chain[0];
+	
+	while (index < chain.length) {
+		if (!(
+			Block.PoW(prevBlock) == chain[index].prevBlockHash &&
+			Block.isValidProof(chain[index])
+		)) {
+			return false;
+		}
+		prevBlock = chain[index];
+		index++;
+	}
+	return true;
+}
+
+function resolveConflict() {
+	const url = "/chain";
+	var newChain, myChain;
+
+	return chain()
+		.then(function(docs) {
+			newChain = myChain = docs;
+
+			return utils.reqToNodes(
+				url, {}, 
+				function(res) { return res.data }
+			);
+		})
+		.then(function(responses) {
+			for (var res of responses) {
+				if (res.success && res.chain.length > newChain.length && isValidChain(res.chain)) {
+					newChain = res.chain;
+				}
+			}
+			if (newChain != myChain) {
+				return Block.remove({});
+			}
+		})
+		.then(function(removed) {
+			if (removed) {
+				return Block.insertMany(newChain);
+			}
+		})
+		.catch(function(err) {
+			throw err;
+		});
+}
+
 module.exports = {
-	createGenesisBlock
+	createGenesisBlock,
+	utxo,
+	chain,
+	isValidChain,
+	resolveConflict
 }

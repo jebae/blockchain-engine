@@ -3,7 +3,6 @@ const ENV = process.env;
 const Crypto = require("crypto");
 const MinerPubkey = ENV["MINER_PUBKEY"];
 const coinbaseAmount = 25;
-const coinbaseId = "0".repeat(64);
 
 const TransactionSchema = new db.Schema({
 	id: { type: String, required: true },
@@ -26,20 +25,20 @@ TransactionSchema.options.toObject.transform = function(doc, ret, options) {
 
 TransactionSchema.methods.makeId = function() {
 	var source = this.toObject();
-	delete source._id;
 
 	this.id = Crypto.createHash("sha256").update(
-		JSON.stringify(source)
+		source.sender +
+		source.timestamp.toString()
 	).digest("hex");
 }
 
 TransactionSchema.statics.coinbase = function() {
 	var coinbase = new Transaction({
-		id: coinbaseId,
 		outputs: [
 			{ receiver: MinerPubkey, amount: coinbaseAmount }
 		]
 	});
+	coinbase.makeId();
 	return coinbase;
 }
 

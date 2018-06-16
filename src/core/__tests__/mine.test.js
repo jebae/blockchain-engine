@@ -4,15 +4,17 @@ const setup = require("../../tests/setup");
 const MineCore = require("../mine");
 const Block = require("../../models").Block;
 const Transaction = require("../../models").Transaction;
+const utils = require("../../utils");
 
 describe("Mine core", function() {
-	var sandbox, fakeIsValidProof,
+	var sandbox, fakeIsValidProof, fakeReqToNodes,
 		genesis, tx;
 
 	beforeEach(async function() {
 		await setup.setup_db();
 		sandbox = sinon.createSandbox();
 		fakeIsValidProof = sandbox.stub(Block, "isValidProof");
+		fakeReqToNodes = sandbox.stub(utils, "reqToNodes");
 
 		genesis = new Block({
 			prevBlockHash: "0000e93abd8969c91092045dbed5a8af912714d751faa6d19a0c379c86992171",
@@ -34,6 +36,13 @@ describe("Mine core", function() {
 	});
 
 	it("should not mine without genesis block", async function() {
+		fakeReqToNodes.returns(Promise.all([
+			Promise.resolve({
+				success: true,
+				chain: [ ]
+			}),
+		]));
+
 		return Promise.resolve(MineCore.mine())
 			.catch(function(err) {
 				expect(err.message).to.equal("Genesis block is not exist");
@@ -42,6 +51,12 @@ describe("Mine core", function() {
 
 	it("should mine", async function() {
 		fakeIsValidProof.returns(true);
+		fakeReqToNodes.returns(Promise.all([
+			Promise.resolve({
+				success: true,
+				chain: [ ]
+			}),
+		]));
 		var new_tx = new Transaction(tx);
 		new_tx.makeId();
 		await new_tx.save();

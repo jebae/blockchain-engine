@@ -3,6 +3,7 @@ const sinon = require("sinon");
 const EC = require("elliptic").ec;
 const Crypto = require("crypto");
 const setup = require("../../tests/setup");
+const BlockCore = require("../").BlockCore;
 const Create = require("../").TxCore.create;
 const Validate = require("../").TxCore.validate;
 const Confirm = require("../").TxCore.confirm;
@@ -24,6 +25,8 @@ describe("Transaction core", function() {
 
 		sandbox = sinon.createSandbox();
 		fakeReqToNodes = sandbox.stub(utils, "reqToNodes");
+		fakeUtxo = sandbox.stub(BlockCore, "utxo");
+
 		tx = {
 			sender: pubkey,
 			inputs: [
@@ -34,8 +37,24 @@ describe("Transaction core", function() {
 			],
 			timestamp: Date.now()
 		};
-		var msghex = Crypto.createHash("sha256").update(JSON.stringify(tx)).digest("hex");
+		var msghex = Crypto.createHash("sha1").update(
+			tx.sender +
+			tx.timestamp
+		).digest("hex");
+
+		var x = key.getPublic().getX().toString(16);
+		var y = key.getPublic().getY().toString(16);
+
 		sign = ec.keyFromPrivate(privatekey, "hex").sign(msghex).toDER("hex");
+		fakeUtxo.returns(Promise.resolve([
+			{
+				id: tx.inputs[0].id,
+				inputs: [],
+				outputs: [
+					{ receiver: tx.sender, amount: tx.inputs[0].amount }
+				]
+			}
+		]));
 	});
 
 	it("should create tx", async function() {
@@ -77,6 +96,14 @@ describe("Transaction core", function() {
 		temp_sign = temp_sign.replace("0", "");
 		expect(Validate.signValidate(tx, temp_sign)).to.equal(Validate.WRONG_SIGN);
 	});
+
+	it("should validate inputs", async function() {
+
+		return Promise.resolve(Validate.inputsValidate(tx))
+			.then(function(message) {
+				expect(message).to.equal(null);
+			})
+	})
 
 	it("should gather validate and organize data", async function() {
 		fakeReqToNodes.returns(Promise.all([

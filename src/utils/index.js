@@ -31,7 +31,9 @@ function reqToNodes(url, data, cb) {
 					axios.post(`http://${node.address}${url}`, data)
 						.then(cb)
 						.catch(function (err) {
-							throw err;
+							return {
+								success: false
+							};
 						})
 				);
 			}

@@ -60,9 +60,10 @@ describe("Tx controller", function() {
 				],
 				outputs: [
 					{ receiver: "receiver", amount: 5 }
-				]
+				],
+				timestamp: Date.now()
 			},
-			sign: " "
+			sign: " ",
 		}};
 
 		return Promise.resolve(TxController.create(req, res))

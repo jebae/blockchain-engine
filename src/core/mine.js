@@ -3,9 +3,21 @@ const axios = require("axios");
 const ENV = process.env;
 const Block = require("../models").Block;
 const Transaction = require("../models").Transaction;
+const BlockCore = require("./block");
+const RESOLVING_CYCLE = 1000;
+
+function resolveConflict(nonce) {
+	if (nonce % RESOLVING_CYCLE == 0) {
+		return BlockCore.resolveConflict();
+	}
+	return Promise.resolve(null);
+}
 
 function check(nonce) {
-	return Block.lastBlock()
+	return resolveConflict(nonce)
+		.then(function() {
+			return Block.lastBlock();
+		})
 		.then(function(last_block) {
 			if (!last_block) {
 				throw new Error("Genesis block is not exist");

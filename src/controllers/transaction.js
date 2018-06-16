@@ -7,7 +7,7 @@ const TX_INVALID = "Transaction is invalid";
 
 function create(req, res) {
 	const required = { 
-		transaction: [ "sender", "inputs", "outputs" ],
+		transaction: [ "sender", "inputs", "outputs", "timestamp" ],
 		sign: undefined
 	};
 	var message = validateRequestBody(req, required);
