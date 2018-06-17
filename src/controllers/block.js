@@ -2,7 +2,7 @@ const BlockCore = require("../core").BlockCore;
 const Transaction = require("../models").Transaction;
 
 function utxo(req, res) {
-	return BlockCore.utxo(req.body.client)
+	return BlockCore.utxo(req.params.client)
 		.then(function(_utxo) {
 			res.json({
 				success: true,
@@ -18,7 +18,6 @@ function utxo(req, res) {
 }
 
 function chain(req, res) {
-	console.log("chain is read");
 	return BlockCore.chain()
 		.then(function(chain) {
 			res.json({

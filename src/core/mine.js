@@ -30,11 +30,11 @@ function check(nonce) {
 			txs.unshift(Transaction.coinbase());
 			block = new Block({
 				prevBlockHash,
-				merkleRootHash: " ",
 				txs,
 				timestamp: Date.now(),
 				nonce
 			});
+			block.merkleRootHash = Block.merkleRootHash(block);
 
 			if (Block.isValidProof(block)) {
 				return block;

@@ -21,14 +21,15 @@ function validateRequestBody(req, required) {
 	return null;
 }
 
-function reqToNodes(url, data, cb) {
+function reqToNodes(method, url, data, cb) {
 	var responses = [];
+	var req = (method == "POST") ? axios.post : axios.get;
 
 	return Node.find()
 		.then(function(nodes){
 			for (var node of nodes) {
 				responses.push(
-					axios.post(`http://${node.address}${url}`, data)
+					req(`http://${node.address}${url}`, data)
 						.then(cb)
 						.catch(function (err) {
 							return {

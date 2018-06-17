@@ -8,11 +8,9 @@ function confirm(tx) {
 
 function broadcastConfirm(tx) {
 	const url = "/transaction/confirm";
-	var consensus = 0,
-		result = false;
 
 	return utils.reqToNodes(
-		url, tx.toObject(), 
+		"POST", url, tx.toObject(), 
 		function(res) { return res.data }
 	);
 }

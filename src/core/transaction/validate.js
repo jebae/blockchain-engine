@@ -79,7 +79,7 @@ function validate(tx, sign) {
 	return inputsValidate(tx)
 		.then(function(message) {
 			return message;
-		})
+		});
 }
 
 function gatherValidate(tx, sign) {
@@ -93,7 +93,7 @@ function gatherValidate(tx, sign) {
 			if (!message) consensus++;
 
 			return utils.reqToNodes(
-				url, data, 
+				"POST", url, data, 
 				function(res) { return res.data }
 			);
 		})

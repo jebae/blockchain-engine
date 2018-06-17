@@ -73,6 +73,33 @@ BlockSchema.statics.isValidProof = function(block) {
 	return false;
 }
 
+BlockSchema.statics.merkleRootHash = function(block) {
+	var i, length;
+	var txs = block.txs.sort(function(a, b) {
+		return a.id > b.id;
+	}).map(function(tx) {
+		return tx.id;
+	});
+
+	while (txs.length != 1) {
+		if (txs.length % 2) {
+			txs.push(txs[txs.length - 1]);
+		}
+		length = txs.length;
+
+		for (i=0; i < length; i+=2) {
+			txs.push(
+				Crypto.createHash("sha256").update(
+					txs[0] + txs[1]
+				).digest("hex")
+			);
+			txs.shift();
+			txs.shift();
+		}
+	}
+	return txs[0];
+}
+
 const NodeSchema = new db.Schema({
 	host: { type: String, required: true },
 	port: { type: Number, required: true }

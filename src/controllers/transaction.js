@@ -55,22 +55,24 @@ function validate(req, res) {
 		return;
 	}
 
-	message = Validate.validate(req.body.transaction, req.body.sign);
-	if (message) {
-		res.json({
-			success: true,
-			validate: false,
-			nodeNum,
-			message
-		});
-		return;
-	}
+	return Validate.validate(req.body.transaction, req.body.sign)
+		.then(function(message) {
+			if (message) {
+				res.json({
+					success: true,
+					validate: false,
+					nodeNum,
+					message
+				});
+				return;
+			}
 
-	res.json({
-		success: true,
-		validate: true,
-		nodeNum
-	});
+			res.json({
+				success: true,
+				validate: true,
+				nodeNum
+			});
+		});
 }
 
 function confirm(req, res) {

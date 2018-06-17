@@ -13,7 +13,7 @@ function createGenesisBlock() {
 				while (1) {
 					genesis = new Block({
 						prevBlockHash,
-						merkleRootHash: " ",
+						merkleRootHash: Crypto.createHash("sha256").update("merkleRootHash").digest("hex"),
 						txs: [],
 						nonce,
 						timestamp: Date.now()
@@ -105,7 +105,7 @@ function resolveConflict() {
 			newChain = myChain = docs;
 
 			return utils.reqToNodes(
-				url, {}, 
+				"GET", url, {}, 
 				function(res) { return res.data }
 			);
 		})

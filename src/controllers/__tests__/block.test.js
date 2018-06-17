@@ -81,7 +81,7 @@ describe("Block controller", function() {
 	it("should show utxo", async function() {
 		await prevBlock.save();
 
-		var req = { body: {
+		var req = { params: {
 			client
 		}};
 

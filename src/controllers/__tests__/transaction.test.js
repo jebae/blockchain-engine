@@ -127,7 +127,7 @@ describe("Tx controller", function() {
 	});
 
 	it("should validate tx", function() {
-		fakeValidate.returns(null);
+		fakeValidate.returns(Promise.resolve(null));
 		var req = { body: {
 			transaction: tx, sign
 		}};
@@ -137,11 +137,13 @@ describe("Tx controller", function() {
 			nodeNum: process.env["SERVER_NUM"]
 		}
 
-		TxController.validate(req, res);
-		expect(res.body.success).to.equal(expected_res.success);
-		expect(res.body.validate).to.equal(expected_res.validate);
-		expect(res.body.nodeNum).to.equal(expected_res.nodeNum);
-		expect(res.body.message).to.equal(undefined);
+		return Promise.resolve(TxController.validate(req, res))
+			.then(function() {
+				expect(res.body.success).to.equal(expected_res.success);
+				expect(res.body.validate).to.equal(expected_res.validate);
+				expect(res.body.nodeNum).to.equal(expected_res.nodeNum);
+				expect(res.body.message).to.equal(undefined);
+			});
 	});
 
 	it("should show message with wrong amount or sign", function() {
@@ -154,19 +156,24 @@ describe("Tx controller", function() {
 			nodeNum: process.env["NODE_NUM"]
 		}
 
-		fakeValidate.returns(Validate.WRONG_AMOUNT);
-		TxController.validate(req, res);
-		expect(res.body.success).to.equal(expected_res.success);
-		expect(res.body.validate).to.equal(expected_res.validate);
-		expect(res.body.nodeNum).to.equal(expected_res.nodeNum);
-		expect(res.body.message).to.equal(Validate.WRONG_AMOUNT);
-
-		fakeValidate.returns(Validate.WRONG_SIGN);
-		TxController.validate(req, res);
-		expect(res.body.success).to.equal(expected_res.success);
-		expect(res.body.validate).to.equal(expected_res.validate);
-		expect(res.body.nodeNum).to.equal(expected_res.nodeNum);
-		expect(res.body.message).to.equal(Validate.WRONG_SIGN);
+		fakeValidate.returns(Promise.resolve(Validate.WRONG_AMOUNT));
+		return Promise.resolve(TxController.validate(req, res))
+			.then(function() {
+				expect(res.body.success).to.equal(expected_res.success);
+				expect(res.body.validate).to.equal(expected_res.validate);
+				expect(res.body.nodeNum).to.equal(expected_res.nodeNum);
+				expect(res.body.message).to.equal(Validate.WRONG_AMOUNT);
+			})
+			.then(function() {
+				fakeValidate.returns(Promise.resolve(Validate.WRONG_SIGN));
+				return TxController.validate(req, res);
+			})
+			.then(function() {
+				expect(res.body.success).to.equal(expected_res.success);
+				expect(res.body.validate).to.equal(expected_res.validate);
+				expect(res.body.nodeNum).to.equal(expected_res.nodeNum);
+				expect(res.body.message).to.equal(Validate.WRONG_SIGN);
+			});
 	})
 
 	it("should confirm", async function() {
