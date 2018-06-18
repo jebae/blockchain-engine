@@ -24,7 +24,7 @@ function check(nonce) {
 			}
 
 			prevBlockHash = Block.PoW(last_block);
-			return Transaction.find().select({ _id: 0 });
+			return Transaction.find().select({ _id: 0 }).exec();
 		})
 		.then(function(txs) {
 			txs.unshift(Transaction.coinbase());

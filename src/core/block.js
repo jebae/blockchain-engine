@@ -111,8 +111,14 @@ function resolveConflict() {
 		})
 		.then(function(responses) {
 			for (var res of responses) {
-				if (res.success && res.chain.length > newChain.length && isValidChain(res.chain)) {
-					newChain = res.chain;
+				if (res.success && isValidChain(res.chain)) {
+					if (
+						(res.chain.length > newChain.length ) ||
+						(res.chain.length == newChain.length && res.chain.length &&
+						res.chain[res.chain.length-1].timestamp < newChain[newChain.length-1].timestamp)
+					) {
+						newChain = res.chain;
+					}
 				}
 			}
 			if (newChain != myChain) {
