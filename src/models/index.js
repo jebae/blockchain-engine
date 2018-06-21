@@ -3,7 +3,7 @@ const ENV = process.env;
 const Crypto = require("crypto");
 const MinerPubkey = ENV["MINER_PUBKEY"];
 const COIN_BASE_AMOUNT = 25;
-const DIFFICULTY = 3;
+const DIFFICULTY = 4;
 
 const TransactionSchema = new db.Schema({
 	id: { type: String, required: true },
@@ -25,11 +25,15 @@ TransactionSchema.options.toObject.transform = function(doc, ret, options) {
 }
 
 TransactionSchema.methods.makeId = function() {
-	var source = this.toObject();
+	var tx = this.toObject();
 
-	this.id = Crypto.createHash("sha256").update(
-		source.sender || "" +
-		source.timestamp.toString()
+	this.id = Transaction.makeId(tx);
+}
+
+TransactionSchema.statics.makeId = function(tx) {
+	return Crypto.createHash("sha256").update(
+		tx.sender || "" +
+		tx.timestamp.toString()
 	).digest("hex");
 }
 
@@ -78,10 +82,10 @@ BlockSchema.statics.isValidProof = function(block) {
 
 BlockSchema.statics.merkleRootHash = function(block) {
 	var i, length;
-	var txs = block.txs.sort(function(a, b) {
-		return a.id > b.id;
-	}).map(function(tx) {
-		return tx.id;
+	var txs = block.txs.map(function(v) {
+		return Transaction.makeId(v);
+	}).sort(function(a, b) {
+		return a > b;
 	});
 
 	while (txs.length != 1) {

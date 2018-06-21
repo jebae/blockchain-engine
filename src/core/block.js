@@ -133,6 +133,11 @@ function resolveConflict() {
 		})
 		.then(function(removed) {
 			if (removed) {
+				return Transaction.remove({});
+			}
+		})
+		.then(function(removed) {
+			if (removed) {
 				return Block.insertMany(newChain);
 			}
 		})

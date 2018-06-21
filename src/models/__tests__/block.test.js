@@ -26,17 +26,17 @@ describe("Block Model", function() {
 	it("should return merkleRootHash", function() {
 		var block = new Block({
 			txs: [
-				{ id: Crypto.createHash("sha256").update(Math.random().toString()).digest("hex") },
-				{ id: Crypto.createHash("sha256").update(Math.random().toString()).digest("hex") },
-				{ id: Crypto.createHash("sha256").update(Math.random().toString()).digest("hex") },
-				{ id: Crypto.createHash("sha256").update(Math.random().toString()).digest("hex") },
-				{ id: Crypto.createHash("sha256").update(Math.random().toString()).digest("hex") }
+				{ sender: "a", timestamp: Date.now() },
+				{ sender: "b", timestamp: Date.now() },
+				{ sender: "c", timestamp: Date.now() },
+				{ sender: "d", timestamp: Date.now() },
+				{ sender: "e", timestamp: Date.now() }
 			]
 		});
-		var txs = block.txs.sort(function(a, b) {
-			return a.id > b.id;
-		}).map(function(tx) {
-			return tx.id;
+		var txs = block.txs.map(function(v) {
+			return Transaction.makeId(v);
+		}).sort(function(a, b) {
+			return a > b;
 		});
 		txs = [
 			Crypto.createHash("sha256").update(txs[0] + txs[1]).digest("hex"),
