@@ -4,7 +4,7 @@ const ENV = process.env;
 const Block = require("../models").Block;
 const Transaction = require("../models").Transaction;
 const BlockCore = require("./block");
-const RESOLVING_CYCLE = 1000;
+const RESOLVING_CYCLE = 100;
 
 function resolveConflict(nonce) {
 	if (nonce % RESOLVING_CYCLE == 0) {

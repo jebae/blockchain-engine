@@ -134,7 +134,7 @@ describe("Tx controller", function() {
 		var expected_res = {
 			success: true,
 			validate: true,
-			nodeNum: process.env["SERVER_NUM"]
+			nodeNum: process.env["NODE_NUM"]
 		}
 
 		return Promise.resolve(TxController.validate(req, res))

@@ -158,37 +158,6 @@ describe("Block core", function() {
 			})
 	});
 
-	it("should check valid chain", async function() {
-		sandbox.restore();
-		var genesis = new Block({
-			prevBlockHash : Crypto.createHash("sha256").update("genesis").digest("hex"),
-			merkleRootHash : " ",
-			txs : [ ],
-			nonce : 59,
-			timestamp : 1529163471863,
-		});
-		var block1 = new Block({
-			prevBlockHash : Block.PoW(genesis),
-			merkleRootHash : " ",
-			txs : [ ],
-			timestamp : 1529163702045,
-			nonce : 133
-		});
-		var block2 = new Block({
-			prevBlockHash : Block.PoW(block1),
-			merkleRootHash : " ",
-			txs : [ ],
-			timestamp : 1529163702938,
-			nonce : 231
-		});
-		await genesis.save();
-		await block1.save();
-		await block2.save();
-
-		var chain = await BlockCore.chain();
-		expect(BlockCore.isValidChain(chain)).to.equal(true);
-	});
-
 	it("should resolve conflict", async function() {
 		var genesis = {
 			prevBlockHash : Crypto.createHash("sha256").update("genesis").digest("hex"),

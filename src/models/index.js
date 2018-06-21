@@ -3,6 +3,7 @@ const ENV = process.env;
 const Crypto = require("crypto");
 const MinerPubkey = ENV["MINER_PUBKEY"];
 const COIN_BASE_AMOUNT = 25;
+const DIFFICULTY = 3;
 
 const TransactionSchema = new db.Schema({
 	id: { type: String, required: true },
@@ -55,9 +56,11 @@ BlockSchema.statics.lastBlock = function() {
 }
 
 BlockSchema.statics.PoW = function(block) {
+	const merkleRootHash = (block.txs.length) ? this.merkleRootHash(block) : block.merkleRootHash;
+
 	return Crypto.createHash("sha256").update(
 		block.prevBlockHash +
-		block.merkleRootHash +
+		merkleRootHash +
 		block.timestamp +
 		block.nonce
 	).digest("hex");
@@ -68,7 +71,7 @@ BlockSchema.statics.isValidProof = function(block) {
 
 	if (process.argv && process.argv[2] == "log")
 		console.log("nonce", block.nonce, "hash", hash);
-	if (hash.split("00")[0] === "") 
+	if (hash.split("0".repeat(DIFFICULTY))[0] === "") 
 		return true;
 	return false;
 }

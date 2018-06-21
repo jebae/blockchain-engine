@@ -75,13 +75,17 @@ function utxo(client) {
 }
 
 function chain() {
-	return Block.find({}, { _id: 0 })
+	return Block.find({}, { _id: 0, __v: 0 })
 		.sort({ timestamp: 1 }).exec();
 }
 
 function isValidChain(chain) {
 	var index = 1;
 	var prevBlock = chain[0];
+
+	if (!prevBlock) {
+		return false;
+	}
 	
 	while (index < chain.length) {
 		if (!(
@@ -98,11 +102,12 @@ function isValidChain(chain) {
 
 function resolveConflict() {
 	const url = "/chain";
-	var newChain, myChain;
+	var newChain;
+	var flag = false;
 
 	return chain()
 		.then(function(docs) {
-			newChain = myChain = docs;
+			newChain = docs;
 
 			return utils.reqToNodes(
 				"GET", url, {}, 
@@ -118,10 +123,11 @@ function resolveConflict() {
 						res.chain[res.chain.length-1].timestamp < newChain[newChain.length-1].timestamp)
 					) {
 						newChain = res.chain;
+						flag = true;
 					}
 				}
 			}
-			if (newChain != myChain) {
+			if (flag) {
 				return Block.remove({});
 			}
 		})
