@@ -32,7 +32,7 @@ TransactionSchema.methods.makeId = function() {
 
 TransactionSchema.statics.makeId = function(tx) {
 	return Crypto.createHash("sha256").update(
-		tx.sender || "" +
+		(tx.sender || "") +
 		tx.timestamp.toString()
 	).digest("hex");
 }
